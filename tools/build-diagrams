@@ -1,0 +1,133 @@
+#!/bin/bash
+set -euo pipefail
+
+BASEDIR="$(cd "$(dirname "$0")" && pwd)"
+PARENTDIR="$(dirname "$BASEDIR")"
+
+# Single all-in-one image built from docker/diagram-tools/Dockerfile
+DIAGRAM_TOOLS_IMAGE="diagram-tools:latest"
+DOCKERFILE_PATH="${PARENTDIR}/docker/diagram-tools/Dockerfile"
+DOCKER_CONTEXT_DIR="$(dirname "$DOCKERFILE_PATH")"
+
+# Alternative PlantUML image
+PLANTUML_IMAGE="think/plantuml:latest"
+
+convert_puml_diagrams() {
+    local source_base="$1"
+    local dest_base="$2"
+
+    # Find all .puml files under source_base
+    find "$source_base" -type f -name "*.puml" | while read -r source_file; do
+        # Compute relative path from source_base
+        local rel_path="${source_file#$source_base/}"
+        local base_name
+        base_name="$(basename -s .puml "$rel_path")"
+        local rel_dir
+        rel_dir="$(dirname "$rel_path")"
+
+        # Create destination directory
+        local dest_dir="${dest_base}/${rel_dir}"
+        echo "$dest_dir"
+        if [[ -e "$dest_dir" && ! -d "$dest_dir" ]]; then
+            echo -e "❌ $dest_dir exists but is not a directory. Aborting."
+            continue
+        fi
+        if [[ ! -e "$dest_dir" ]]; then
+            mkdir -p "$dest_dir"
+        fi
+
+        echo -e "Converting ${base_name} diagram in ${rel_dir}"
+
+        # Convert PUML -> SVG using PlantUML inside the all-in-one image
+        local svg_file="${dest_dir}/${base_name}.svg"
+        echo -e " - converting the ${source_file} to ${svg_file} .."
+        cat "$source_file" | docker run --rm -i "$PLANTUML_IMAGE" -tsvg > "$svg_file"
+
+        # Convert SVG -> PNG using Inkscape in the same image
+        local png_file="${dest_dir}/${base_name}.png"
+        echo -e " - converting ${svg_file} to ${png_file} .."
+        docker run --rm \
+            -v "${dest_dir}:/work" \
+            -e DBUS_SESSION_BUS_ADDRESS=/dev/null \
+            "$DIAGRAM_TOOLS_IMAGE" \
+            inkscape "/work/${base_name}.svg" \
+                --export-type=png \
+                --export-filename="/work/${base_name}.png" \
+                --export-background=white 2>>inkscape_errors.log
+
+        echo -e "Finished conversion for ${base_name}\n"
+        echo ""
+    done
+}
+
+convert_mermaid_diagrams() {
+    local source_base="$1"
+    local dest_base="$2"
+
+    # Find all .mmd files under source_base
+    find "$source_base" -type f -name "*.mmd" | sort | while read -r mmd_file; do
+        # Compute relative path from source_base
+        local rel_path="${mmd_file#$source_base/}"
+        local base_name
+        base_name="$(basename -s .mmd "$rel_path")"
+        local rel_dir
+        rel_dir="$(dirname "$rel_path")"
+
+        # Create destination directory
+        local dest_dir="${dest_base}/${rel_dir}"
+        if [[ -e "$dest_dir" && ! -d "$dest_dir" ]]; then
+            echo -e "❌ $dest_dir exists but is not a directory. Aborting."
+            continue
+        fi
+        if [[ ! -e "$dest_dir" ]]; then
+            mkdir -p "$dest_dir"
+        fi
+
+        echo -e "Converting ${base_name}.mmd in ${rel_dir}"
+
+        # Convert MMD -> SVG with Mermaid CLI inside the all-in-one image
+        docker run --rm --shm-size=1g \
+          --user "$(id -u)":"$(id -g)" \
+          -e PUPPETEER_CACHE_DIR=/tmp/puppeteer \
+          -e TMPDIR=/tmp \
+          -v "${source_base}:/src" \
+          -v "${dest_dir}:/out" \
+          "$DIAGRAM_TOOLS_IMAGE" \
+          mmdc -i "/src/${rel_path}" -o "/out/${base_name}.svg" \
+              --puppeteerConfigFile /etc/puppeteer.json
+
+        docker run --rm --shm-size=1g \
+          --user "$(id -u)":"$(id -g)" \
+          -e PUPPETEER_CACHE_DIR=/tmp/puppeteer \
+          -e TMPDIR=/tmp \
+          -v "${source_base}:/src" \
+          -v "${dest_dir}:/out" \
+          "$DIAGRAM_TOOLS_IMAGE" \
+          mmdc -i "/src/${rel_path}" -o "/out/${base_name}.png" \
+              --puppeteerConfigFile /etc/puppeteer.json
+
+        echo -e "Finished conversion for ${base_name}"
+        echo ""
+    done
+}
+
+# Check for Docker
+if ! command -v docker >/dev/null 2>&1; then
+    echo >&2 "Docker is required but not installed. Aborting."
+    exit 1
+fi
+
+# Build the unified diagram tools image
+if [[ ! -f "$DOCKERFILE_PATH" ]]; then
+  echo >&2 "❌ Dockerfile not found at: $DOCKERFILE_PATH"
+  exit 1
+fi
+
+echo "Building $DIAGRAM_TOOLS_IMAGE from $DOCKERFILE_PATH ..."
+docker build -t "$DIAGRAM_TOOLS_IMAGE" -f "$DOCKERFILE_PATH" "$DOCKER_CONTEXT_DIR"
+
+# Convert diagram files
+# run *.puml conversion on entire diagrams/src tree
+convert_puml_diagrams "${PARENTDIR}/diagrams/src" "${PARENTDIR}/diagrams/dist"
+# run *.mmd conversion on entire diagrams/src tree
+convert_mermaid_diagrams "${PARENTDIR}/diagrams/src" "${PARENTDIR}/diagrams/dist"

@@ -1,0 +1,44 @@
+flowchart LR
+%% Hospital Portal - System Context Diagram
+
+    classDef person fill:#fef6e4,stroke:#333,stroke-width:1px;
+    classDef system fill:#e6f7ff,stroke:#1e90ff,stroke-width:1px;
+    classDef external fill:#f5f5f5,stroke:#888,stroke-dasharray:5 3;
+    classDef note fill:#fffbe6,stroke:#d4b106,color:#333;
+
+%% People
+    medic["Person: Medic<br>Provides bedside care and clinical notes"]:::person
+    nurse["Person: Nurse<br>Supports patients and updates vitals"]:::person
+
+%% Main system
+    system["System: Healthcare Mobile App<br>Supports pre-round, bedside, and post-round activities"]:::system
+
+%% External systems
+    hospitalIS["External System: Hospital Information System<br>Stores patient records and lab results"]:::external
+    authService["External System: Authentication Service<br>Provides single sign-on for staff"]:::external
+
+%% Flows / relationships
+    medic -- "Uses<br>(iOS/Android app)" --> system
+    nurse -- "Uses<br>(iOS/Android app)" --> system
+    system -- "Reads/writes patient data<br>HTTPS/JSON; HL7® FHIR® REST" --> hospitalIS
+    system -- "Authenticates users<br>OpenID Connect (OIDC)" --> authService
+
+%% Loose layout grouping
+subgraph Users [ ]
+    direction TB
+    medic
+    nurse
+end
+
+subgraph Externals [ ]
+    direction TB
+    hospitalIS
+    authService
+end
+
+%% Notes
+n1["Note:<br>- 99.9% availability; offline-first sync<br>- Handles PHI/PII; on-device storage encrypted at rest<br>- All write operations are auditable"]:::note
+n2["Note:<br>Integration: Prefer FHIR REST; Versioning: FHIR R4 baseline"]:::note
+
+n1 -.-> system
+n2 -.-> hospitalIS

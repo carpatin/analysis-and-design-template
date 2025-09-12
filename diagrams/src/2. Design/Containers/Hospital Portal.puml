@@ -1,0 +1,49 @@
+@startuml
+
+!include <C4/C4_Container.puml>
+
+title Hospital Portal – Container Diagram
+
+Person(medic, "Medic")
+Person(nurse, "Nurse")
+
+System_Boundary(hp, "Hospital Portal") {
+  Container(mobile, "Healthcare Mobile App", "iOS/Android (React Native)", "Allows medics and nurses to manage pre-/bedside-/post-round duties.")
+  Container(apigw, "API Gateway", "Kong / NGINX", "Single entry point for mobile app; routing, rate limiting, auth enforcement.")
+  Container(api_auth, "Auth Service", "Node.js", "OIDC/OAuth2, tokens, user sessions, roles.")
+  Container(api_patient, "Patient Service", "Java/Spring Boot", "Patient profiles, vitals, labs, attachments.")
+  Container(api_rounds, "Rounding Service", "Python/FastAPI", "Task lists, checklists, notes for rounds.")
+  Container(api_notify, "Notification Service", "Go", "Push notifications and SMS.")
+  ContainerDb(db_core, "Core Database", "PostgreSQL", "Operational data for services.")
+  ContainerQueue(queue_notify, "Notifications queue")
+}
+
+System_Ext(his, "Hospital Information System") {
+ Container_Ext(his_api, "HIS API", "External API", "Supports limited data access")
+ ContainerDb_Ext(his_db, "HIS DB", "MS SQLServer", "Hospital Information System")
+}
+
+Container_Ext(push, "Push Message \n Provider", "APN/FCM")
+Container_Ext(sms, "SMS Gateway", "Twilio/Nexmo/...", "External service for sending SMS messages")
+
+Rel(medic, mobile, "Uses", "iOS/Android app")
+Rel(nurse, mobile, "Uses", "iOS/Android app")
+Rel(mobile, apigw, "API calls", "HTTPS/JSON + JWT")
+Rel(apigw, api_auth, "Authenticate/Authorize", "gRPC/HTTP")
+Rel(apigw, api_patient, "Route patient requests", "gRPC/HTTP")
+Rel(apigw, api_rounds, "Route rounds requests", "gRPC/HTTP")
+Rel(apigw, api_notify, "Route notification requests", "gRPC/HTTP")
+Rel(api_auth, db_core, "Read/Write users, tokens", "SQL")
+Rel(api_patient, db_core, "Read/Write patient data", "SQL")
+Rel(api_rounds, db_core, "Read/Write tasks/notes", "SQL")
+Rel_D(api_patient, his_db, "Fetch labs, orders, results", "SQL")
+Rel_D(api_patient, his_db, "Fetch EHRs", "SQL")
+Rel_D(api_rounds, his_db, "Fetch orders", "SQL")
+Rel_D(api_patient, his_api, "Load partial patient data", "HTTPS/JSON")
+Rel_R(api_notify, push, "Send push messages", "HTTPS")
+Rel_R(api_notify, sms, "Send SMS messages", "HTTPS")
+Rel_U(api_notify, queue_notify, "Enqueue notification", "AMQP")
+Rel_U(api_notify, queue_notify, "Process notification", "AMQP")
+
+SHOW_LEGEND()
+@enduml

@@ -1,0 +1,94 @@
+@startuml
+
+skinparam dpi 200
+skinparam activity {
+  BackgroundColor lightblue
+  BorderColor blue
+}
+
+title Hospital Portal – Physiotherapist - Bedside visit
+
+' Establish activity diagram and swimlanes
+|Doctor|
+|System|
+|Nurse|
+
+start
+
+|Doctor|
+:Doctor opens the mobile application;
+
+|System|
+:System displays the login screen;
+
+|Doctor|
+:Doctor enters the credentials;
+
+|System|
+while (System validates credentials?) is (NO)
+  :System shows authentication error;
+  |Doctor|
+  :Doctor re-enters the credentials;
+  |System|
+endwhile (YES)
+
+:System issues an access token;
+
+|Doctor|
+:Doctor selects the current shift and patient list;
+
+|System|
+fork
+  :System preloads patient data and clinical history;
+fork again
+  :System synchronizes patient tasks and active orders;
+end fork
+
+|Doctor|
+while (More patients in the list?) is (YES)
+  :Doctor reviews patient data and plans the visit;
+  :Doctor starts the bedside visit;
+
+  fork
+    ' --- Branch A: NMES ---
+    |Doctor|
+    if (Is NMES indicated?) then (YES)
+      :Doctor prescribes an NMES session;
+      |System|
+      if (Is the device available?) then (YES)
+        |Nurse|
+        :Nurse applies NMES according to protocol;
+      else (NO)
+        |Nurse|
+        :Nurse reschedules the NMES session;
+      endif
+    endif
+
+  fork again
+    ' --- Branch B: Treatment ---
+    |System|
+    if (Is there an active treatment order?) then (YES)
+      |Nurse|
+      :Nurse administers treatment as prescribed;
+    else (NO)
+      |Nurse|
+      :Nurse requests clarification before administration;
+    endif
+  end fork
+
+  |Doctor|
+  :Doctor validates the visit note and signs electronically;
+
+  |System|
+  :System saves the note and updates the EHR;
+
+  |Doctor|
+  :Doctor proceeds to the next patient;
+endwhile (NO)
+
+|Doctor|
+:Doctor finalizes the daily round;
+
+stop
+
+@enduml

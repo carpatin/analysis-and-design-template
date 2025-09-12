@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BASEDIR="$(cd "$(dirname "$0")" && pwd)"
+PARENTDIR="$(dirname "$BASEDIR")"
+DIST_DIR="${PARENTDIR}/diagrams/dist"
+README_FILE="${PARENTDIR}/chapters/Diagrams.md"
+
+# Start fresh
+echo "# Project diagrams" > "$README_FILE"
+echo "" >> "$README_FILE"
+
+# Track last printed heading path to avoid duplicates
+declare -A printed_headings
+
+# Find all SVG files and sort them
+while IFS= read -r svg_path; do
+    # Remove base path
+    rel_path="${svg_path#$DIST_DIR/}"
+
+    # Dir & file parts
+    file_name="$(basename -- "$rel_path")"
+    dir_path="$(dirname -- "$rel_path")"
+
+    # Print headings for each level if not already printed
+    if [[ "$dir_path" != "." ]]; then
+        IFS='/' read -r -a parts <<< "$dir_path"
+        current_path=""
+        for ((i=0; i<${#parts[@]}; i++)); do
+            current_path+="${parts[$i]}/"
+            # SAFE unset check (works with set -u)
+            if [[ -z "${printed_headings[$current_path]+x}" ]]; then
+                heading_level=$(printf '%0.s#' $(seq 1 $((i+1))))
+                echo "${heading_level} ${parts[$i]}" >> "$README_FILE"
+                echo "" >> "$README_FILE"
+                printed_headings[$current_path]=1
+            fi
+        done
+    fi
+
+    # Adjust relative path for readme links
+    adjusted_rel_path=$(python3 -c "import urllib.parse; print(urllib.parse.quote('diagrams/dist/${rel_path}'))")
+    # Strip extension from file name
+    image_title="${file_name%.*}"
+
+    # Write title and image to README
+    echo "**${image_title}**" >> "$README_FILE"
+    echo "![${file_name}](./${adjusted_rel_path})" >> "$README_FILE"
+
+    # Add download link for PNG if present
+    png_path="${rel_path%.svg}.png"
+    if [[ -f "$DIST_DIR/$png_path" ]]; then
+        adjusted_png_path=$(python3 -c "import urllib.parse; print(urllib.parse.quote('diagrams/dist/${png_path}'))")
+        echo "[⬇️ Download PNG](./${adjusted_png_path})" >> "$README_FILE"
+    fi
+    echo "" >> "$README_FILE"
+done < <(find "$DIST_DIR" -type f -name "*.svg" | sort)

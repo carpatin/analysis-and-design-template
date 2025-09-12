@@ -1,0 +1,38 @@
+graph TB
+    title[Hospital Portal - System Context Diagram]
+    medic["Medic
+    --
+Provides bedside care and clinical notes"]
+nurse["Nurse
+--
+Supports patients and updates vitals"]
+
+system["Healthcare Mobile App
+--
+Supports pre-round, bedside, and post-round activities"]
+
+hospitalIS["Hospital Information System
+--
+Stores patient records and lab results"]
+
+authService["Authentication Service
+--
+Provides single sign-on for staff"]
+
+medic -- " Uses <br> iOS/Android app " --> system
+nurse -- " Uses <br> iOS/Android app" --> system
+system -- " Reads/writes patient data <br> HTTPS/JSON; HL7® FHIR® REST " --> hospitalIS
+system -- " Authenticates users <br> OpenID Connect (OIDC) " --> authService
+
+note1["- Non-functional: 99.9% availability; offline-first sync <br>
+- Data: handles PHI/PII; on-device storage encrypted at rest <br>
+- Audit: all write operations are auditable"]
+
+note2["Integration: Prefer FHIR REST; Versioning: FHIR R4 baseline"]
+
+%% Layout hints
+style system fill: #1168bd, stroke:#0b4884, color: white
+style hospitalIS fill:#999999, stroke: #6b6b6b, color: white
+style authService fill: #999999, stroke: #6b6b6b,color: white
+style medic fill: #08427b,stroke: #052e56, color: white
+style nurse fill: #08427b, stroke: #052e56, color:white

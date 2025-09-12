@@ -1,0 +1,62 @@
+@startuml
+
+skinparam dpi 200
+skinparam sequenceMessageAlign center
+
+title Hospital Portal – Physiotherapist - Bedside visit
+
+actor Doctor
+participant System
+actor Nurse
+
+Doctor -> System: Opens mobile application
+System --> Doctor: Displays login screen
+Doctor -> System: Enters credentials
+
+loop while invalid credentials
+    System --> Doctor: Shows authentication error
+    Doctor -> System: Re-enters credentials
+end
+
+System --> Doctor: Issues access token
+Doctor -> System: Selects current shift and patient list
+
+par
+    System --> System: Preloads patient data and clinical history
+else
+    System --> System: Synchronizes patient tasks and active orders
+end
+
+loop while more patients in list
+    Doctor -> System: Reviews patient data and plans visit
+    Doctor -> System: Starts bedside visit
+
+    par
+        alt NMES indicated
+            Doctor -> System: Prescribes NMES session
+            alt device available
+                System -> Nurse: Request NMES application
+                Nurse -> System: Applies NMES according to protocol
+            else device not available  
+                System -> Nurse: Request NMES rescheduling
+                Nurse -> System: Reschedules NMES session
+            end
+        end
+    else
+        alt active treatment order exists
+            System -> Nurse: Request treatment administration 
+            Nurse -> System: Administers treatment as prescribed
+        else no active order
+            System -> Nurse: Request clarification
+            Nurse -> System: Requests clarification before administration
+        end
+    end
+
+    Doctor -> System: Validates and signs visit note
+    System --> Doctor: Saves note and updates EHR
+    Doctor -> System: Proceeds to next patient
+end
+
+Doctor -> System: Finalizes daily round
+
+@enduml

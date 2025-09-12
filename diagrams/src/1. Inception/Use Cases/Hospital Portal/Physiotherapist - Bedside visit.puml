@@ -1,0 +1,38 @@
+@startuml
+
+skinparam dpi 200
+
+skinparam usecase {
+  BackgroundColor lightblue
+  BorderColor blue
+}
+skinparam actor {
+  BackgroundColor lightgray
+  BorderColor gray
+}
+
+top to bottom direction
+
+actor Medic
+actor Physiotherapist
+actor Nurse
+
+rectangle "Hospital Portal - Physiotherapist / Nurse Use Cases" {
+  usecase "Login" as UC1
+  usecase "Perform pre-round preparation" as UC2
+  usecase "Perform bedside visit" as UC3
+  usecase "Administer treatment" as UC4
+  usecase "Apply neuromuscular electrical stimulation" as UC5
+}
+
+Physiotherapist --|> Medic
+
+Physiotherapist --> UC3
+Nurse --> UC4
+
+UC3 --> UC2 : <<include>>
+UC2 --> UC1 : <<include>>
+UC4 --> UC1 : <<include>>
+UC5 --> UC3 : <<extend>>
+
+@enduml

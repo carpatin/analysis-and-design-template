@@ -1,0 +1,36 @@
+@startuml
+
+!include <C4/C4_Context.puml>
+
+title Hospital Portal - System Context Diagram
+
+Person(medic, "Medic", "Provides bedside care and clinical notes")
+Person(nurse, "Nurse", "Supports patients and updates vitals")
+
+System(system, "Healthcare Mobile App", "Supports pre-round, bedside, and post-round activities")
+
+System_Ext(hospitalIS, "Hospital Information System", "Stores patient records and lab results")
+System_Ext(authService, "Authentication Service", "Provides single sign-on for staff")
+
+Rel(medic, system, "Uses", "iOS/Android app")
+Rel(nurse, system, "Uses", "iOS/Android app")
+Rel(system, hospitalIS, "Reads/writes patient data", "HTTPS/JSON; HL7® FHIR® REST")
+Rel(system, authService, "Authenticates users", "OpenID Connect (OIDC)")
+
+' Layout hints - format: Lay_{D|U|L|R}(A, B) ⇒ “place A Down/Up/Left/Right of B” (best-effort; not guaranteed)
+Lay_D(medic, system)
+Lay_D(nurse, system)
+Lay_R(system, hospitalIS)
+Lay_R(system, authService)
+
+note right of system
+- Non-functional: 99.9% availability; offline-first sync
+- Data: handles PHI/PII; on-device storage encrypted at rest
+- Audit: all write operations are auditable
+end note
+
+note top of hospitalIS
+Integration: Prefer FHIR REST; Versioning: FHIR R4 baseline
+end note
+
+@enduml

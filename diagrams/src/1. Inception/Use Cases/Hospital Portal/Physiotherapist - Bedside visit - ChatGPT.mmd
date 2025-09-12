@@ -1,0 +1,29 @@
+flowchart TB
+
+%% === Styles ===
+    classDef actor fill:#f5f5f5,stroke:#888,stroke-width:1px;
+    classDef usecase fill:#e6f7ff,stroke:#1e90ff,stroke-width:1px;
+
+%% === Actors ===
+    Medic["Actor: Medic"]:::actor
+    Physiotherapist["Actor: Physiotherapist"]:::actor
+    Nurse["Actor: Nurse"]:::actor
+
+%% === Use Cases ===
+    subgraph UC["Hospital Portal - Physiotherapist / Nurse Use Cases"]
+        direction TB
+        UC1["Use Case: Login"]:::usecase
+        UC2["Use Case: Perform pre-round preparation"]:::usecase
+        UC3["Use Case: Perform bedside visit"]:::usecase
+        UC4["Use Case: Administer treatment"]:::usecase
+        UC5["Use Case: Apply neuromuscular<br>electrical stimulation"]:::usecase
+    end
+
+%% === Relationships ===
+    Physiotherapist -->|is a| Medic
+    Physiotherapist --> UC3
+    Nurse --> UC4
+    UC3 -->|include| UC2
+    UC2 -->|include| UC1
+    UC4 -->|include| UC1
+    UC5 -->|extend| UC3

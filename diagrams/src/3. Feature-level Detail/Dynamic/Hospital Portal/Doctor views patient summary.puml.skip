@@ -1,0 +1,43 @@
+@startuml
+
+!include <C4/C4_Dynamic.puml>
+
+title Hospital Portal – Doctor views patient summary
+
+LAYOUT_TOP_DOWN()
+
+Person(doctor, "Doctor")
+
+System_Boundary(hp, "Hospital Portal") {
+  Container(mobile, "Healthcare Mobile App", "React Native")
+  Container(apigw, "API Gateway", "Kong/NGINX")
+  Container(api_auth, "Auth Service", "Node.js")
+  Container(api_patient, "Patient Service", "Java / Spring Boot")
+  ContainerDb(db_core, "Core DB", "PostgreSQL")
+}
+
+System_Ext(his, "Hospital Information System") {
+  ContainerDb_Ext(his_db, "HIS DB", "MS SQL Server")
+  Container_Ext(his_api, "HIS API", "HTTPS/JSON")
+}
+
+Rel(doctor, mobile, "Opens app; Login screen", $index=Index())
+Rel(mobile, apigw, "Send OIDC credentials", $index=Index())
+Rel(apigw, api_auth, "Authenticate / Authorize", $index=Index())
+Rel(api_auth, db_core, "Verify user / roles (SQL)", $index=Index())
+Rel(api_auth, apigw, "Respond with JWT token", $index=Index())
+Rel(apigw, mobile, "JWT to client", $index=Index())
+
+Rel(mobile, apigw, "Request: Patient summary + lab results (JWT)", $index=Index())
+Rel(apigw, api_patient, "Route request", $index=Index())
+Rel(api_patient, db_core, "Profiles, visits, demographics (SQL)", $index=Index())
+Rel(api_patient, his_api, "Augment patient data (HTTPS/JSON)", $index=Index())
+Rel(api_patient, his_db, "Query labs / orders / results (SQL, read-only)", $index=Index())
+
+Rel(api_patient, apigw, "Aggregate and return summary + labs", $index=Index())
+Rel(apigw, mobile, "JSON payload response", $index=Index())
+Rel(mobile, doctor, "Display patient summary and lab results", $index=Index())
+
+SHOW_LEGEND()
+
+@enduml

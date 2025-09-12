@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
+CHAPTERS_DIR="$PROJECT_ROOT/chapters"
+OUTPUT_FILE="$PROJECT_ROOT/README.md"
+TOC_DEPTH=3
+TOC_TITLE="Table of Contents"
+DOC_TITLE="Documentation"
+PANDOC_IMAGE="diagram-tools:latest"
+
+[[ -d "$CHAPTERS_DIR" ]] || { echo "❌ Missing dir: $CHAPTERS_DIR" >&2; exit 1; }
+command -v docker >/dev/null || { echo "❌ Docker required" >&2; exit 1; }
+
+# Collect .md files (natural sort, safe with spaces)
+mapfile -d '' CHAPTER_FILES < <(find "$CHAPTERS_DIR" -maxdepth 1 -type f -name '*.md' -print0 | sort -z -V)
+(( ${#CHAPTER_FILES[@]} )) || { echo "❌ No .md files in $CHAPTERS_DIR" >&2; exit 1; }
+
+# Convert absolute host paths to paths relative to $PROJECT_ROOT (visible under /data)
+REL_FILES=()
+for f in "${CHAPTER_FILES[@]}"; do
+  REL_FILES+=("${f#$PROJECT_ROOT/}")  # e.g., chapters/1. Introduction.md
+done
+
+echo "📚 Building README via Dockerized Pandoc…"
+
+# Ensure image exists (optional pull)
+docker image inspect "$PANDOC_IMAGE" >/dev/null 2>&1 || docker pull "$PANDOC_IMAGE"
+
+# Run pandoc on all chapter files directly (merge happens in pandoc)
+docker run --rm \
+  -v "$PROJECT_ROOT":/data \
+  -w /data \
+  "$PANDOC_IMAGE" \
+  pandoc \
+    --toc --toc-depth="$TOC_DEPTH" --standalone \
+    -M "title=$DOC_TITLE" \
+    -M "toc-title=$TOC_TITLE" \
+    -f markdown -t gfm \
+    "${REL_FILES[@]}" \
+    -o "README.md"
+
+echo "✅ README.md generated: $OUTPUT_FILE"

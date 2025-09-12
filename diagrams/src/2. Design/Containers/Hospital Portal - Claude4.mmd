@@ -1,0 +1,60 @@
+graph TB
+    title[Hospital Portal - Container Diagram]
+%% Persons 
+    medic[Medic]
+    nurse[Nurse]
+    style medic fill: #08427B, stroke: #073B6F, color: #ffffff
+    style nurse fill: #08427B, stroke: #073B6F, color: #ffffff
+
+subgraph hp[Hospital Portal]
+style hp fill: #1168BD, stroke: #0B4884, color: #ffffff
+mobile[Healthcare Mobile App<br>iOS/Android React Native<br>Allows medics and nurses to manage pre-/bedside-/post-round duties]
+apigw[API Gateway<br>Kong / NGINX<br>Single entry point for mobile app; routing, rate limiting, auth enforcement]
+api_auth[Auth Service<br>Node.js<br>OIDC/OAuth2, tokens, user sessions, roles]
+api_patient[Patient Service<br>Java/Spring Boot<br>Patient profiles, vitals, labs, attachments]
+api_rounds[Rounding Service<br>Python/FastAPI<br>Task lists, checklists, notes for rounds]
+api_notify[Notification Service<br>Go<br>Push notifications and SMS]
+db_core[(Core Database<br>PostgreSQL<br>Operational data for services)]
+queue_notify([Notifications queue])
+style mobile fill: #438DD5, stroke: #2E6295, color: #ffffff
+style apigw fill: #438DD5, stroke: #2E6295, color: #ffffff
+style api_auth fill: #438DD5, stroke: #2E6295, color: #ffffff
+style api_patient fill: #438DD5, stroke: #2E6295, color: #ffffff
+style api_rounds fill: #438DD5, stroke: #2E6295, color: #ffffff
+style api_notify fill: #438DD5, stroke: #2E6295, color: #ffffff
+style db_core fill: #438DD5, stroke: #2E6295, color: #ffffff
+style queue_notify fill: #438DD5, stroke: #2E6295, color: #ffffff
+end
+
+subgraph his[Hospital Information System]
+style his fill:#999999, stroke: #6B6B6B, color: #ffffff
+his_api[HIS API<br>External API<br>Supports limited data access]
+his_db[(HIS DB<br>MS SQLServer<br>Hospital Information System)]
+style his_api fill: #B3B3B3, stroke: #8A8A8A, color: #ffffff
+style his_db fill: #B3B3B3, stroke: #8A8A8A, color: #ffffff
+end
+
+push[Push Message Provider<br>APN/FCM]
+sms[SMS Gateway<br>Twilio/Nexmo/...<br>External service for sending SMS messages]
+style push fill: #999999, stroke: #6B6B6B, color:#ffffff
+style sms fill: #999999, stroke:#6B6B6B, color: #ffffff
+
+%% Relationships
+medic -->|Uses<br>iOS/Android app|mobile
+nurse -->|Uses<br>iOS/Android app|mobile
+mobile -->|API calls<br>HTTPS/JSON + JWT|apigw
+apigw -->|Authenticate/Authorize<br>gRPC/HTTP|api_auth
+apigw -->|Route patient requests<br>gRPC/HTTP|api_patient
+apigw -->|Route rounds requests<br>gRPC/HTTP|api_rounds
+apigw -->|Route notification requests<br>gRPC/HTTP|api_notify
+api_auth -->|Read/Write users, tokens<br>SQL|db_core
+api_patient -->|Read/Write patient data<br>SQL|db_core
+api_rounds -->|Read/Write tasks/notes<br>SQL|db_core
+api_patient -->|Fetch labs, orders, results<br>SQL|his_db
+api_patient -->|Fetch EHRs<br>SQL|his_db
+api_rounds -->|Fetch orders<br>SQL|his_db
+api_patient -->|Load partial patient data<br>HTTPS/JSON|his_api
+api_notify -->|Send push messages<br>HTTPS|push
+api_notify -->|Send SMS messages<br>HTTPS|sms
+api_notify -->|Enqueue notification<br>AMQP|queue_notify
+api_notify -->|Process notification<br>AMQP|queue_notify

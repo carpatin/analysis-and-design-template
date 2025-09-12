@@ -1,0 +1,63 @@
+@startuml
+
+!include <C4/C4_Deployment.puml>
+
+title Hospital Portal – Deployment (Production)
+
+LAYOUT_TOP_DOWN()
+
+' -- Devices
+Deployment_Node(devices, "Mobile Devices", "iOS & Android") {
+  Container(mobile, "Healthcare Mobile App", "React Native", "Used by medics and nurses")
+}
+
+' -- Cloud (Production)
+Deployment_Node(aws, "Cloud – Production", "Region: eu-central-1") {
+
+  Deployment_Node(k8s, "Kubernetes Cluster", "EKS") {
+    Container(apigw,      "API Gateway",          "Kong/NGINX",        "Routing, rate limits, auth enforcement")
+    Container(api_auth,   "Auth Service",         "Node.js",           "OIDC/OAuth2, sessions, roles")
+    Container(api_patient,"Patient Service",      "Java / Spring Boot","Profiles, vitals, labs, attachments")
+    Container(api_rounds, "Rounding Service",     "Python / FastAPI",  "Tasks, checklists, notes")
+    Container(api_notify, "Notification Service", "Go",                "Push & SMS dispatch")
+  }
+
+  Deployment_Node(data, "Data Services", "Managed") {
+    ContainerDb(db_core, "Core Database", "PostgreSQL (RDS)", "Operational data")
+    ContainerQueue(queue_notify, "Notifications queue", "AMQP")
+  }
+}
+
+' -- External systems
+Deployment_Node(his_env, "Hospital Information System", "On-prem") {
+  ContainerDb_Ext(his_db, "HIS DB", "MS SQL Server", "Hospital Information System")
+  Container_Ext(his_api,  "HIS API", "HTTPS/JSON", "Limited data access")
+}
+Deployment_Node(push_env, "Push Message Provider", "APNs / FCM") {
+  Container_Ext(push, "Push Endpoint", "HTTPS", "Device notifications")
+}
+Deployment_Node(sms_env, "SMS Gateway", "Twilio/Nexmo") {
+  Container_Ext(sms, "SMS API", "HTTPS", "Outbound SMS")
+}
+
+' -- Relationships (basic Rel only)
+Rel(mobile,  apigw,       "HTTPS/JSON + JWT")
+Rel(apigw,   api_auth,    "Authenticate / Authorize")
+Rel(apigw,   api_patient, "Route patient requests")
+Rel(apigw,   api_rounds,  "Route rounds requests")
+Rel(apigw,   api_notify,  "Route notification requests")
+
+Rel(api_auth,    db_core, "SQL read/write")
+Rel(api_patient, db_core, "SQL read/write")
+Rel(api_rounds,  db_core, "SQL read/write")
+
+Rel(api_patient, his_db,  "Read labs/orders/results (SQL, ro)")
+Rel(api_patient, his_api, "Load partial patient data (HTTPS/JSON)")
+
+Rel(api_notify,  queue_notify, "Enqueue/consume (AMQP)")
+Rel(api_notify,  push,         "Send push (HTTPS)")
+Rel(api_notify,  sms,          "Send SMS (HTTPS)")
+
+SHOW_LEGEND()
+
+@enduml

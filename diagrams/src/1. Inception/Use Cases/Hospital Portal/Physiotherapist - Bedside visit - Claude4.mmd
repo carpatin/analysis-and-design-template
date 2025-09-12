@@ -1,0 +1,22 @@
+flowchart TB
+    classDef actor fill: lightgray, stroke: gray
+    classDef usecase fill: lightblue, stroke: blue
+    Medic["Medic"]:::actor
+    Physiotherapist["Physiotherapist"]:::actor
+    Nurse["Nurse"]:::actor
+
+    subgraph "Hospital Portal - Physiotherapist / Nurse Use Cases"
+        UC1["Login"]:::usecase
+        UC2["Perform pre-round preparation"]:::usecase
+        UC3["Perform bedside visit"]:::usecase
+        UC4["Administer treatment"]:::usecase
+        UC5["Apply neuromuscular electrical stimulation"]:::usecase
+    end
+
+    Physiotherapist -->|is a| Medic
+    Physiotherapist --> UC3
+    Nurse --> UC4
+    UC3 -->|include| UC2
+    UC2 -->|include| UC1
+    UC4 -->|include| UC1
+    UC5 -->|extend| UC3

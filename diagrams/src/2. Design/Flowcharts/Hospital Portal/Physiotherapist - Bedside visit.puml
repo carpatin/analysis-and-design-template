@@ -1,0 +1,63 @@
+@startuml
+
+skinparam dpi 200
+
+skinparam activity {
+  BackgroundColor lightblue
+  BorderColor blue
+}
+skinparam note {
+  BackgroundColor lightgray
+  BorderColor gray
+}
+
+title Hospital Portal Flow (Login → Pre-round → Bedside → Treatment/NMES → Close)
+
+start
+:Doctor opens the mobile application;
+:System displays the login screen;
+:Doctor enters credentials;
+
+while (System validates credentials?) is (NO)
+  :System shows authentication error;
+  :Doctor re-enters credentials;
+endwhile (YES)
+:System issues access token;
+note right
+Audit Module: Event stored for audit purposes.
+end note
+
+:Doctor selects current shift and patient list;
+:System preloads patient data and clinical history;
+
+while (More patients in the list?) is (YES)
+  :Doctor reviews patient data and plans the visit;
+endwhile (NO)
+
+:Doctor starts bedside visit;
+
+if (NMES indicated?) then (YES)
+  :Doctor prescribes NMES session;
+  if (Device available?) then (YES)
+    :Nurse applies NMES according to protocol;
+  else (NO)
+    :Nurse reschedules NMES session;
+  endif
+endif
+
+if (Active treatment order?) then (YES)
+  :Nurse administers treatment as prescribed;
+else (NO)
+  :Nurse requests clarification before administering;
+endif
+
+:Doctor validates the visit note and signs electronically;
+:System saves the note and updates the EHR;
+
+while (More bedside patients?) is (YES)
+  :Doctor performs bedside steps for the next patient;
+endwhile (NO)
+
+:Doctor finalizes daily round;
+stop
+@enduml
