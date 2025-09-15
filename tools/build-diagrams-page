@@ -30,7 +30,7 @@ while IFS= read -r svg_path; do
             current_path+="${parts[$i]}/"
             # SAFE unset check (works with set -u)
             if [[ -z "${printed_headings[$current_path]+x}" ]]; then
-                heading_level=$(printf '%0.s#' $(seq 1 $((i+1))))
+                heading_level=$(printf '%0.s#' $(seq 1 $((i+2))))
                 echo "${heading_level} ${parts[$i]}" >> "$README_FILE"
                 echo "" >> "$README_FILE"
                 printed_headings[$current_path]=1

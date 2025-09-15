@@ -9,9 +9,6 @@ DIAGRAM_TOOLS_IMAGE="diagram-tools:latest"
 DOCKERFILE_PATH="${PARENTDIR}/docker/diagram-tools/Dockerfile"
 DOCKER_CONTEXT_DIR="$(dirname "$DOCKERFILE_PATH")"
 
-# Alternative PlantUML image
-PLANTUML_IMAGE="think/plantuml:latest"
-
 convert_puml_diagrams() {
     local source_base="$1"
     local dest_base="$2"
@@ -36,12 +33,19 @@ convert_puml_diagrams() {
             mkdir -p "$dest_dir"
         fi
 
+        local plantuml_log_file="${PARENTDIR}/logs/${base_name}.plantuml.log"
+        local inkscape_log_file="${PARENTDIR}/logs/${base_name}.inkscape.log"
+
         echo -e "Converting ${base_name} diagram in ${rel_dir}"
 
         # Convert PUML -> SVG using PlantUML inside the all-in-one image
         local svg_file="${dest_dir}/${base_name}.svg"
         echo -e " - converting the ${source_file} to ${svg_file} .."
-        cat "$source_file" | docker run --rm -i "$PLANTUML_IMAGE" -tsvg > "$svg_file"
+        cat "$source_file" \
+        | docker run --rm -i "$DIAGRAM_TOOLS_IMAGE" \
+            plantuml -tsvg -pipe -verbose \
+            > "$svg_file" \
+            2> "$plantuml_log_file"
 
         # Convert SVG -> PNG using Inkscape in the same image
         local png_file="${dest_dir}/${base_name}.png"
@@ -53,7 +57,8 @@ convert_puml_diagrams() {
             inkscape "/work/${base_name}.svg" \
                 --export-type=png \
                 --export-filename="/work/${base_name}.png" \
-                --export-background=white 2>>inkscape_errors.log
+                --export-background=white \
+                2> "$inkscape_log_file"
 
         echo -e "Finished conversion for ${base_name}\n"
         echo ""
@@ -104,6 +109,7 @@ convert_mermaid_diagrams() {
           -v "${dest_dir}:/out" \
           "$DIAGRAM_TOOLS_IMAGE" \
           mmdc -i "/src/${rel_path}" -o "/out/${base_name}.png" \
+              --width 1920 --scale 2 \
               --puppeteerConfigFile /etc/puppeteer.json
 
         echo -e "Finished conversion for ${base_name}"
@@ -123,8 +129,12 @@ if [[ ! -f "$DOCKERFILE_PATH" ]]; then
   exit 1
 fi
 
-echo "Building $DIAGRAM_TOOLS_IMAGE from $DOCKERFILE_PATH ..."
-docker build -t "$DIAGRAM_TOOLS_IMAGE" -f "$DOCKERFILE_PATH" "$DOCKER_CONTEXT_DIR"
+if ! docker image inspect "$DIAGRAM_TOOLS_IMAGE" >/dev/null 2>&1; then
+  echo "Building $DIAGRAM_TOOLS_IMAGE from $DOCKERFILE_PATH ..."
+  docker build -t "$DIAGRAM_TOOLS_IMAGE" -f "$DOCKERFILE_PATH" "$DOCKER_CONTEXT_DIR"
+else
+  echo "Image $DIAGRAM_TOOLS_IMAGE already exists, skipping build"
+fi
 
 # Convert diagram files
 # run *.puml conversion on entire diagrams/src tree

@@ -5,21 +5,17 @@ toc-title: Table of Contents
 
 - [Introduction](#introduction)
 - [Project diagrams](#project-diagrams)
-- [1. Inception](#inception)
-  - [Context](#context)
-  - [Use Cases](#use-cases)
-    - [Hospital Portal](#hospital-portal)
-- [2. Design](#design)
-  - [Containers](#containers)
-  - [Flowcharts](#flowcharts)
-    - [Hospital Portal](#hospital-portal-1)
-- [3. Feature-level Detail](#feature-level-detail)
-  - [Activity](#activity)
-    - [Hospital Platform](#hospital-platform)
-  - [Sequence](#sequence)
-    - [Hospital Platform](#hospital-platform-1)
-- [4. Implementation-Infra](#implementation-infra)
-  - [Deployments](#deployments)
+  - [1. Inception](#inception)
+    - [Context](#context)
+    - [Use Cases](#use-cases)
+  - [2. Design](#design)
+    - [Containers](#containers)
+    - [Flowcharts](#flowcharts)
+  - [3. Feature-level Detail](#feature-level-detail)
+    - [Activity](#activity)
+    - [Sequence](#sequence)
+  - [4. Implementation-Infra](#implementation-infra)
+    - [Deployments](#deployments)
 
 # Introduction
 
@@ -28,28 +24,28 @@ offer.
 
 # Project diagrams
 
-# 1. Inception
+## 1. Inception
 
-## Context
-
-**Hospital Portal - Claude4** ![Hospital Portal -
-Claude4.svg](./diagrams/dist/1.%20Inception/Context/Hospital%20Portal%20%20-%20Claude4.svg)
-[⬇️ Download
-PNG](./diagrams/dist/1.%20Inception/Context/Hospital%20Portal%20%20-%20Claude4.png)
+### Context
 
 **Hospital Portal - ChatGPT** ![Hospital Portal -
 ChatGPT.svg](./diagrams/dist/1.%20Inception/Context/Hospital%20Portal%20-%20ChatGPT.svg)
 [⬇️ Download
 PNG](./diagrams/dist/1.%20Inception/Context/Hospital%20Portal%20-%20ChatGPT.png)
 
+**Hospital Portal - Claude4** ![Hospital Portal -
+Claude4.svg](./diagrams/dist/1.%20Inception/Context/Hospital%20Portal%20-%20Claude4.svg)
+[⬇️ Download
+PNG](./diagrams/dist/1.%20Inception/Context/Hospital%20Portal%20-%20Claude4.png)
+
 **Hospital Portal** ![Hospital
 Portal.svg](./diagrams/dist/1.%20Inception/Context/Hospital%20Portal.svg)
 [⬇️ Download
 PNG](./diagrams/dist/1.%20Inception/Context/Hospital%20Portal.png)
 
-## Use Cases
+### Use Cases
 
-### Hospital Portal
+#### Hospital Portal
 
 **Physiotherapist - Bedside visit - ChatGPT** ![Physiotherapist -
 Bedside visit -
@@ -68,9 +64,9 @@ visit.svg](./diagrams/dist/1.%20Inception/Use%20Cases/Hospital%20Portal/Physioth
 [⬇️ Download
 PNG](./diagrams/dist/1.%20Inception/Use%20Cases/Hospital%20Portal/Physiotherapist%20-%20Bedside%20visit.png)
 
-# 2. Design
+## 2. Design
 
-## Containers
+### Containers
 
 **Hospital Portal - ChatGPT** ![Hospital Portal -
 ChatGPT.svg](./diagrams/dist/2.%20Design/Containers/Hospital%20Portal%20-%20ChatGPT.svg)
@@ -87,29 +83,29 @@ Portal.svg](./diagrams/dist/2.%20Design/Containers/Hospital%20Portal.svg)
 [⬇️ Download
 PNG](./diagrams/dist/2.%20Design/Containers/Hospital%20Portal.png)
 
-## Flowcharts
+### Flowcharts
 
-### Hospital Portal
+#### Hospital Portal
 
 **Physiotherapist - Bedside visit** ![Physiotherapist - Bedside
 visit.svg](./diagrams/dist/2.%20Design/Flowcharts/Hospital%20Portal/Physiotherapist%20-%20Bedside%20visit.svg)
 [⬇️ Download
 PNG](./diagrams/dist/2.%20Design/Flowcharts/Hospital%20Portal/Physiotherapist%20-%20Bedside%20visit.png)
 
-# 3. Feature-level Detail
+## 3. Feature-level Detail
 
-## Activity
+### Activity
 
-### Hospital Platform
+#### Hospital Platform
 
 **Physiotherapist - Bedside visit** ![Physiotherapist - Bedside
 visit.svg](./diagrams/dist/3.%20Feature-level%20Detail/Activity/Hospital%20Platform/Physiotherapist%20-%20Bedside%20visit.svg)
 [⬇️ Download
 PNG](./diagrams/dist/3.%20Feature-level%20Detail/Activity/Hospital%20Platform/Physiotherapist%20-%20Bedside%20visit.png)
 
-## Sequence
+### Sequence
 
-### Hospital Platform
+#### Hospital Platform
 
 **Physiotherapist - Bedside visit - Claude4** ![Physiotherapist -
 Bedside visit -
@@ -117,9 +113,9 @@ Claude4.svg](./diagrams/dist/3.%20Feature-level%20Detail/Sequence/Hospital%20Pla
 [⬇️ Download
 PNG](./diagrams/dist/3.%20Feature-level%20Detail/Sequence/Hospital%20Platform/Physiotherapist%20-%20Bedside%20visit%20-%20Claude4.png)
 
-# 4. Implementation-Infra
+## 4. Implementation-Infra
 
-## Deployments
+### Deployments
 
 **Hospital Portal** ![Hospital
 Portal.svg](./diagrams/dist/4.%20Implementation-Infra/Deployments/Hospital%20Portal.svg)
